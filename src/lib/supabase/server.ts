@@ -20,25 +20,36 @@ export function createClient() {
     } as unknown as ReturnType<typeof cookies>;
   }
 
-  return createServerClient(url, key, {
-    cookies: {
-      getAll() {
-        try {
-          return cookieStore.getAll();
-        } catch {
-          return [];
-        }
+  try {
+    return createServerClient(url, key, {
+      cookies: {
+        getAll() {
+          try {
+            return cookieStore.getAll();
+          } catch {
+            return [];
+          }
+        },
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing user sessions.
+          }
+        },
       },
-      setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        } catch {
-          // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing user sessions.
-        }
+    });
+  } catch (err) {
+    console.error("createServerClient initialization fallback triggered:", err);
+    // Return a safe placeholder client to prevent 500 crashes
+    return createServerClient(FALLBACK_URL, FALLBACK_KEY, {
+      cookies: {
+        getAll: () => [],
+        setAll: () => {},
       },
-    },
-  });
+    });
+  }
 }

@@ -1,77 +1,101 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { isEmailAllowed, resolveUserRole, getDashboardPathForRole } from "@/lib/auth-guard";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  try {
+    const { pathname } = request.nextUrl;
+    const isAuthRoute = pathname.startsWith("/login");
+    const isDashboardRoute = pathname.startsWith("/dashboard");
+    const isRootRoute = pathname === "/";
 
-  const { supabaseResponse, user } = await updateSession(request);
-
-  const isAuthRoute = pathname.startsWith("/login");
-  const isDashboardRoute = pathname.startsWith("/dashboard");
-  const isRootRoute = pathname === "/";
-
-  // Case 1: Unauthenticated user trying to access protected dashboard routes
-  if (isDashboardRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // Case 2: User is logged in
-  if (user && user.email) {
-    const allowed = isEmailAllowed(user.email);
-
-    // Closed System Gate: If email is NOT whitelisted, block immediately
-    if (!allowed) {
-      if (!isAuthRoute) {
+    // 1. If Supabase is not configured yet (e.g. initial deployment on Cloudflare Pages)
+    // Allow /login to load so the guided Persian setup instructions can render.
+    // If trying to access dashboard or root without config, route to /login.
+    if (!isSupabaseConfigured()) {
+      if (isDashboardRoute || isRootRoute) {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
-        url.searchParams.set("error", "unauthorized");
         return NextResponse.redirect(url);
       }
-      return supabaseResponse;
+      return NextResponse.next();
     }
 
-    const role = resolveUserRole(user.email);
-    const targetDashboard = role ? getDashboardPathForRole(role) : "/login";
+    // 2. Resolve session safely
+    const { supabaseResponse, user } = await updateSession(request);
 
-    // If visiting root "/" or "/login", redirect to user's assigned dashboard
-    if (isRootRoute || isAuthRoute) {
+    // Case 1: Unauthenticated user trying to access protected dashboard routes
+    if (isDashboardRoute && !user) {
       const url = request.nextUrl.clone();
-      url.pathname = targetDashboard;
+      url.pathname = "/login";
       return NextResponse.redirect(url);
     }
 
-    // Role-based routing: if on generic "/dashboard", route to role dashboard
-    if (pathname === "/dashboard" || pathname === "/dashboard/") {
+    // Case 2: User is logged in
+    if (user && user.email) {
+      const allowed = isEmailAllowed(user.email);
+
+      // Closed System Gate: If email is NOT whitelisted, block immediately
+      if (!allowed) {
+        if (!isAuthRoute) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/login";
+          url.searchParams.set("error", "unauthorized");
+          return NextResponse.redirect(url);
+        }
+        return supabaseResponse;
+      }
+
+      const role = resolveUserRole(user.email);
+      const targetDashboard = role ? getDashboardPathForRole(role) : "/login";
+
+      // If visiting root "/" or "/login", redirect to user's assigned dashboard
+      if (isRootRoute || isAuthRoute) {
+        const url = request.nextUrl.clone();
+        url.pathname = targetDashboard;
+        return NextResponse.redirect(url);
+      }
+
+      // Role-based routing: if on generic "/dashboard", route to role dashboard
+      if (pathname === "/dashboard" || pathname === "/dashboard/") {
+        const url = request.nextUrl.clone();
+        url.pathname = targetDashboard;
+        return NextResponse.redirect(url);
+      }
+
+      // Strict role partition: keep 'her' in her dashboard and 'him' in his dashboard
+      if (role === "her" && pathname.startsWith("/dashboard/him")) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard/her";
+        return NextResponse.redirect(url);
+      }
+
+      if (role === "him" && pathname.startsWith("/dashboard/her")) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard/him";
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // If root "/" and not logged in, redirect to login
+    if (isRootRoute && !user) {
       const url = request.nextUrl.clone();
-      url.pathname = targetDashboard;
+      url.pathname = "/login";
       return NextResponse.redirect(url);
     }
 
-    // Strict role partition: keep 'her' in her dashboard and 'him' in his dashboard
-    if (role === "her" && pathname.startsWith("/dashboard/him")) {
+    return supabaseResponse;
+  } catch (err) {
+    console.error("Middleware caught unexpected Edge error:", err);
+    // Never fail with 500: redirect dashboard requests to login, otherwise pass through
+    if (request.nextUrl.pathname.startsWith("/dashboard")) {
       const url = request.nextUrl.clone();
-      url.pathname = "/dashboard/her";
+      url.pathname = "/login";
       return NextResponse.redirect(url);
     }
-
-    if (role === "him" && pathname.startsWith("/dashboard/her")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard/him";
-      return NextResponse.redirect(url);
-    }
+    return NextResponse.next();
   }
-
-  // If root "/" and not logged in, redirect to login
-  if (isRootRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
 }
 
 export const config = {

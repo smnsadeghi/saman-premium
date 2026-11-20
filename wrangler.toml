@@ -2,3 +2,11 @@ name = "saman-premium"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://lqwnjcnpizkdtowoezxi.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxxd25qY25waXprZHRvd29lenhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMTk4MDMsImV4cCI6MjExMDY5NTgwM30.vv8FcpUXhYSVGgEQ2kt-1zsb9EvmGeANXi-7MKvTgik"
+NEXT_PUBLIC_ALLOWED_EMAIL_HER = "Zohrekhalilizademahani@gmail.com"
+NEXT_PUBLIC_ALLOWED_EMAIL_HIM = "samansadeghi071@gmail.com"
+ALLOWED_EMAIL_HER = "Zohrekhalilizademahani@gmail.com"
+ALLOWED_EMAIL_HIM = "samansadeghi071@gmail.com"

@@ -1,10 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { resolveUserRole, getDashboardPathForRole } from "@/lib/auth-guard";
 
 export const runtime = "edge";
 
 export default async function HomePage() {
+  if (!isSupabaseConfigured()) {
+    redirect("/login");
+  }
+
   const supabase = createClient();
   const {
     data: { user },

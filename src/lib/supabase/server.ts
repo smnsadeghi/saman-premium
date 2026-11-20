@@ -1,15 +1,33 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { isSupabaseConfigured } from "./client";
+
+const FALLBACK_URL = "https://placeholder.supabase.co";
+const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder";
 
 export function createClient() {
-  const cookieStore = cookies();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const isConfigured = isSupabaseConfigured();
+  const url = isConfigured ? process.env.NEXT_PUBLIC_SUPABASE_URL!.trim() : FALLBACK_URL;
+  const key = isConfigured ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!.trim() : FALLBACK_KEY;
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
+  let cookieStore: ReturnType<typeof cookies>;
+  try {
+    cookieStore = cookies();
+  } catch {
+    cookieStore = {
+      getAll: () => [],
+      set: () => {},
+    } as unknown as ReturnType<typeof cookies>;
+  }
+
+  return createServerClient(url, key, {
     cookies: {
       getAll() {
-        return cookieStore.getAll();
+        try {
+          return cookieStore.getAll();
+        } catch {
+          return [];
+        }
       },
       setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
         try {

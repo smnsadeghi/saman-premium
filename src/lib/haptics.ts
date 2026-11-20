@@ -2,7 +2,12 @@
  * Subtle vibration patterns for native-feeling mobile haptic feedback.
  */
 function vibrate(pattern: number | number[]) {
-  if (typeof window !== "undefined" && "navigator" in window && "vibrate" in navigator) {
+  if (
+    typeof window !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    "vibrate" in navigator &&
+    typeof navigator.vibrate === "function"
+  ) {
     try {
       navigator.vibrate(pattern);
     } catch {

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { resolveUserRole } from "@/lib/auth-guard";
 import { DashboardNav } from "@/components/dashboard-nav";
 
@@ -10,6 +11,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (!isSupabaseConfigured()) {
+    redirect("/login");
+  }
+
   const supabase = createClient();
   const {
     data: { user },

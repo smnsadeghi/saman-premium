@@ -5,7 +5,8 @@ export const runtime = "edge";
 import React, { useState, useEffect } from "react";
 import { PartnerWindowView } from "@/types/ritual";
 import { fetchHimWindow } from "@/lib/services/window-service";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { SupabaseConfigMissing } from "@/components/ui/supabase-config-missing";
 import { AtmosphericBackground } from "@/components/theme/atmospheric-background";
 import { DashboardSkeleton } from "@/components/ui/skeleton-loader";
 import { DormantViewNative } from "@/components/dormant/dormant-view-native";
@@ -14,6 +15,10 @@ import { PartnerCareFeedNative } from "@/components/active/partner-care-feed-nat
 import { Check } from "lucide-react";
 
 export default function HimDashboardPage() {
+  if (!isSupabaseConfigured()) {
+    return <SupabaseConfigMissing />;
+  }
+
   const supabase = createClient();
   const [windowData, setWindowData] = useState<PartnerWindowView | null>(null);
   const [loading, setLoading] = useState(true);

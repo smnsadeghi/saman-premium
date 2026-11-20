@@ -28,7 +28,11 @@ export function DashboardNav({ role, userEmail, userName }: DashboardNavProps) {
 
   const handleLogout = async () => {
     tapLight();
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore error if network fails or keys are missing
+    }
     router.push("/login");
     router.refresh();
   };

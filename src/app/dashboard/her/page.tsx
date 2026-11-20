@@ -5,7 +5,8 @@ export const runtime = "edge";
 import React, { useState, useEffect } from "react";
 import { AppWindow, WindowKind } from "@/types/ritual";
 import { fetchHerWindow } from "@/lib/services/window-service";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { SupabaseConfigMissing } from "@/components/ui/supabase-config-missing";
 import { AtmosphericBackground } from "@/components/theme/atmospheric-background";
 import { DashboardSkeleton } from "@/components/ui/skeleton-loader";
 import { DormantViewNative } from "@/components/dormant/dormant-view-native";
@@ -18,6 +19,10 @@ import { Check, AlertCircle } from "lucide-react";
 import { tapLight } from "@/lib/haptics";
 
 export default function HerDashboardPage() {
+  if (!isSupabaseConfigured()) {
+    return <SupabaseConfigMissing />;
+  }
+
   const supabase = createClient();
   const [windowData, setWindowData] = useState<AppWindow | null>(null);
   const [loading, setLoading] = useState(true);

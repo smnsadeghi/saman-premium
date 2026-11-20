@@ -5,12 +5,19 @@ export const runtime = "edge";
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Mail, KeyRound, Sparkles, AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { isEmailAllowed, resolveUserRole, getDashboardPathForRole } from "@/lib/auth-guard";
+import { SupabaseConfigMissing } from "@/components/ui/supabase-config-missing";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // If Supabase is not configured in production, show the guided instructions
+  if (!isSupabaseConfigured()) {
+    return <SupabaseConfigMissing />;
+  }
+
   const supabase = createClient();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");

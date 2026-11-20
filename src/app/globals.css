@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    --font-vazirmatn: "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --background: #0f0e11;
     --foreground: #f6f3f8;
   }

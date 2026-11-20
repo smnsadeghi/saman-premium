@@ -1,13 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Vazirmatn } from "next/font/google";
 import "./globals.css";
-
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-vazirmatn",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Saman Premium",
@@ -49,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fa" dir="rtl" className={`${vazirmatn.variable} dark select-none`}>
+    <html lang="fa" dir="rtl" className="dark select-none">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
